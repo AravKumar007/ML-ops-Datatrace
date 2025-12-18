@@ -1,63 +1,27 @@
 import hashlib
-import shutil
-import json
-import pandas as pd
-from datetime import datetime
 from pathlib import Path
 
-from datatrace.utils import (
-    DATASETS_DIR,
-    METADATA_FILE,
-    DB_FILE,
-    ensure_storage
-)
-import sqlite3
+CHUNK_SIZE = 8192
 
 
-def add_dataset(file_path: str) -> str:
-    ensure_storage()
-
-    file_path = Path(file_path)
-    if not file_path.exists():
-        raise FileNotFoundError("Dataset not found")
-
-    file_hash = hashlib.md5(file_path.read_bytes()).hexdigest()[:8]
-    stored_name = f"{file_path.stem}_{file_hash}{file_path.suffix}"
-    destination = DATASETS_DIR / stored_name
-
-    shutil.copy(file_path, destination)
-
-    df = pd.read_csv(file_path)
-
-    metadata = json.loads(METADATA_FILE.read_text())
-    metadata[file_hash] = {
-        "file": file_path.name,
-        "stored_as": stored_name,
-        "rows": len(df),
-        "columns": len(df.columns),
-        "timestamp": datetime.utcnow().isoformat()
-    }
-
-    METADATA_FILE.write_text(json.dumps(metadata, indent=4))
-
-    conn = sqlite3.connect(DB_FILE)
-    conn.execute(
-        "INSERT OR REPLACE INTO datasets VALUES (?, ?, ?, ?, ?, ?)",
-        (
-            file_hash,
-            file_path.name,
-            stored_name,
-            len(df),
-            len(df.columns),
-            metadata[file_hash]["timestamp"]
-        )
-    )
-    conn.commit()
-    conn.close()
-
-    return file_hash
+def file_hash(path: Path) -> str:
+    sha = hashlib.sha256()
+    with open(path, "rb") as f:
+        while chunk := f.read(CHUNK_SIZE):
+            sha.update(chunk)
+    return sha.hexdigest()
 
 
-def list_datasets():
-    ensure_storage()
-    return json.loads(METADATA_FILE.read_text())
+def dataset_hash(dataset_dir: Path) -> str:
+    sha = hashlib.sha256()
+
+    for file in sorted(dataset_dir.rglob("*")):
+        if file.is_file():
+            sha.update(str(file.relative_to(dataset_dir)).encode())
+            sha.update(file_hash(file).encode())
+
+    return sha.hexdigest()
+
+
+def version_id(hash_value: str) -> str:
+    return hash_value[:8]
