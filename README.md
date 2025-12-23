@@ -10,8 +10,8 @@ Ideal for personal ML projects or learning MLOps fundamentals.
 
 ## Why Datatrace?
 - **Lightweight**: Pure Python + SQLite for fast setup.
-- **Educational**: Demonstrates core MLOps concepts (hashing, tracking, linking).
-- **Portfolio-Ready**: Includes CI/CD, tests, Docker, and ML demo—showcases Python packaging, DB management, DevOps.
+- **Proper execution**: Demonstrates core MLOps concepts (hashing, tracking, linking).
+- **Tech stacks**: Includes CI/CD, tests, Docker, and ML demo—showcases Python packaging, DB management, DevOps.
 
 ## Key Features
 - Dataset versioning with SHA-256 hashing and auto-metadata (e.g., rows/cols for CSVs).
