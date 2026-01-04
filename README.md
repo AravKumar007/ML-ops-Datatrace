@@ -2,6 +2,9 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![CI](https://github.com/AravKumar007/ML-ops-Datatrace/actions/workflows/datatrace.yml/badge.svg)](
+https://github.com/AravKumar007/ML-ops-Datatrace/actions/workflows/datatrace.yml)
+
 
 
 Datatrace is a custom CLI tool for MLOps, focusing on dataset versioning, experiment tracking, and reproducibility. Built from scratch with Python and SQLite—no heavy dependencies like MLflow or DVC.
