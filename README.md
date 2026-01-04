@@ -2,8 +2,8 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![CI](https://github.com/AravKumar007/ML-ops-Datatrace/actions/workflows/datatrace.yml/badge.svg)](
-https://github.com/AravKumar007/ML-ops-Datatrace/actions/workflows/datatrace.yml)
+[![Dockerized](https://img.shields.io/badge/Docker-Dockerized-blue?logo=docker)](https://hub.docker.com/)
+
 
 
 
