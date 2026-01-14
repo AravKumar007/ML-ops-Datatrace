@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 from io import BytesIO
 
 # Clean imports from the package root (after fixing __init__.py)
+# In app.py - replace the old from datatrace.datasets / versioning etc. lines
+
 from datatrace import (
     add_dataset,
     list_datasets,
@@ -13,7 +15,6 @@ from datatrace import (
     track_usage,
     visualize_metric
 )
-
 def add_dataset_fn(file, metadata: str = ""):
     if file is None:
         return "Please upload a file first!"
@@ -116,3 +117,4 @@ with gr.Blocks(title="Datatrace - MLOps Tracker") as demo:
 
 if __name__ == "__main__":
     demo.launch()
+
