@@ -4,138 +4,115 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from io import BytesIO
 
-# Import your own modules - adjust paths if needed
-from datatrace.datasets import add_dataset, list_datasets
-from datatrace.experiments import log_experiment, get_experiments
-from datatrace.tracking import track_usage
-from datatrace.visualize import visualize_metric
+# Clean imports from the package root (after fixing __init__.py)
+from datatrace import (
+    add_dataset,
+    list_datasets,
+    log_experiment,
+    get_experiments,
+    track_usage,
+    visualize_metric
+)
 
-def add_dataset_fn(file, metadata: str):
+def add_dataset_fn(file, metadata: str = ""):
     if file is None:
         return "Please upload a file first!"
-    
-    # Gradio temp file path
-    file_path = file.name
-    
     try:
-        meta_dict = {"note": metadata} if metadata.strip() else {}
-        dataset_hash = add_dataset(file_path, metadata=meta_dict)
-        return f"Dataset successfully versioned!\nHash: **{dataset_hash}**"
+        meta_dict = {"note": metadata.strip()} if metadata.strip() else {}
+        dataset_hash = add_dataset(file.name, metadata=meta_dict)
+        return f"**Dataset versioned successfully!**\nHash: `{dataset_hash}`"
     except Exception as e:
         return f"Error: {str(e)}"
 
 def list_datasets_fn():
     datasets = list_datasets()
     if not datasets:
-        return "No datasets found yet."
+        return pd.DataFrame([{"message": "No datasets versioned yet"}])
     return pd.DataFrame(datasets)
 
 def log_experiment_fn(name: str, dataset_hash: str, params: str, metrics: str):
     if not name or not dataset_hash:
         return "Name and Dataset Hash are required!"
-    
     try:
-        # Simple parsing - in real use you might want better input format
-        params_dict = dict(item.split(":", 1) for item in params.split(",") if ":" in item)
-        metrics_dict = dict(item.split(":", 1) for item in metrics.split(",") if ":" in item)
-        
+        params_dict = dict(item.split(":", 1) for item in params.split(",") if ":" in item.strip())
+        metrics_dict = dict(item.split(":", 1) for item in metrics.split(",") if ":" in item.strip())
         log_experiment(name, dataset_hash, params_dict, metrics_dict)
         return "Experiment logged successfully!"
     except Exception as e:
-        return f"Error logging experiment: {str(e)}"
+        return f"Error: {str(e)}"
 
 def show_experiments_fn():
     exps = get_experiments()
     if not exps:
-        return "No experiments logged yet."
+        return pd.DataFrame([{"message": "No experiments logged yet"}])
     return pd.DataFrame(exps)
 
-def track_usage_fn(dataset_hash: str, action_desc: str):
-    if not dataset_hash or not action_desc:
-        return "Both hash and action description required!"
+def track_usage_fn(dataset_hash: str, action: str):
+    if not dataset_hash or not action:
+        return "Hash and action description required!"
     try:
-        track_usage(dataset_hash, action_desc)
-        return "Usage tracked!"
+        track_usage(dataset_hash, action)
+        return "Usage tracked successfully!"
     except Exception as e:
         return f"Error: {str(e)}"
 
 def visualize_metric_fn(metric_name: str):
     try:
-        fig = visualize_metric(metric_name)  # Your function should return matplotlib Figure
+        fig = visualize_metric(metric_name)
         buf = BytesIO()
         fig.savefig(buf, format="png", bbox_inches="tight")
         buf.seek(0)
-        plt.close(fig)  # Important - prevent memory leak
+        plt.close(fig)
         return buf
     except Exception as e:
-        return f"Error generating plot: {str(e)}"
+        return f"Could not generate plot: {str(e)}"
 
 # ────────────────────────────────────────────────────────────────
-#               Gradio Interface
+# Gradio UI
 # ────────────────────────────────────────────────────────────────
 
-with gr.Blocks(title="Datatrace • Lightweight MLOps Tracker") as demo:
-    gr.Markdown(
-        """
-        # Datatrace
-        **Lightweight Dataset Versioning • Experiment Tracking • Usage Auditing**
-        
-        Built from scratch with Python + SQLite • No heavy frameworks
-        """
-    )
-    
+with gr.Blocks(title="Datatrace - MLOps Tracker") as demo:
+    gr.Markdown("# Datatrace\nLightweight Dataset Versioning & Experiment Tracking")
+
     with gr.Tabs():
         with gr.Tab("Datasets"):
-            with gr.Row():
-                file_upload = gr.File(label="Upload dataset (CSV, etc.)")
-                metadata = gr.Textbox(label="Optional metadata / note", placeholder="e.g. initial version v1")
-            add_btn = gr.Button("Version Dataset")
-            dataset_result = gr.Markdown()
-            add_btn.click(add_dataset_fn, [file_upload, metadata], dataset_result)
-            
+            file_upload = gr.File(label="Upload file (csv, etc.)")
+            metadata = gr.Textbox(label="Optional note/metadata")
+            btn_add = gr.Button("Add & Version Dataset")
+            result_add = gr.Markdown()
+            btn_add.click(add_dataset_fn, [file_upload, metadata], result_add)
+
             gr.Markdown("---")
-            list_btn = gr.Button("Show All Versioned Datasets")
-            datasets_table = gr.Dataframe()
-            list_btn.click(list_datasets_fn, None, datasets_table)
-        
+            btn_list = gr.Button("Show All Datasets")
+            table_datasets = gr.Dataframe()
+            btn_list.click(list_datasets_fn, None, table_datasets)
+
         with gr.Tab("Experiments"):
-            exp_name = gr.Textbox(label="Experiment Name", placeholder="mnist_cnn_v2")
+            exp_name = gr.Textbox(label="Experiment Name")
             ds_hash = gr.Textbox(label="Dataset Hash")
-            params_input = gr.Textbox(
-                label="Parameters", 
-                placeholder="optimizer:adam,lr:0.001,epochs:10",
-                info="comma separated key:value pairs"
-            )
-            metrics_input = gr.Textbox(
-                label="Metrics", 
-                placeholder="accuracy:0.96,val_loss:0.12",
-                info="comma separated key:value pairs"
-            )
-            log_btn = gr.Button("Log Experiment")
-            log_result = gr.Markdown()
-            log_btn.click(
-                log_experiment_fn,
-                [exp_name, ds_hash, params_input, metrics_input],
-                log_result
-            )
-            
+            params = gr.Textbox(label="Parameters", placeholder="lr:0.01,epochs:10")
+            metrics = gr.Textbox(label="Metrics", placeholder="accuracy:0.95,loss:0.23")
+            btn_log = gr.Button("Log Experiment")
+            result_log = gr.Markdown()
+            btn_log.click(log_experiment_fn, [exp_name, ds_hash, params, metrics], result_log)
+
             gr.Markdown("---")
-            show_exp_btn = gr.Button("Show All Experiments")
-            experiments_table = gr.Dataframe()
-            show_exp_btn.click(show_experiments_fn, None, experiments_table)
-        
-        with gr.Tab("Tracking & Visualization"):
+            btn_show = gr.Button("Show All Experiments")
+            table_exps = gr.Dataframe()
+            btn_show.click(show_experiments_fn, None, table_exps)
+
+        with gr.Tab("Tracking & Plots"):
             track_hash = gr.Textbox(label="Dataset Hash")
-            action = gr.Textbox(label="What did you do?", placeholder="Used in random forest training")
-            track_btn = gr.Button("Track Usage")
-            track_result = gr.Markdown()
-            track_btn.click(track_usage_fn, [track_hash, action], track_result)
-            
+            action_desc = gr.Textbox(label="Action / Usage Description")
+            btn_track = gr.Button("Track Usage")
+            result_track = gr.Markdown()
+            btn_track.click(track_usage_fn, [track_hash, action_desc], result_track)
+
             gr.Markdown("---")
-            metric_select = gr.Textbox(label="Metric to plot", value="accuracy", placeholder="accuracy / loss / f1")
-            plot_btn = gr.Button("Generate Plot")
-            plot_output = gr.Image(label="Metric Evolution")
-            plot_btn.click(visualize_metric_fn, metric_select, plot_output)
+            metric_input = gr.Textbox(label="Metric name to plot", value="accuracy")
+            btn_plot = gr.Button("Show Plot")
+            plot_output = gr.Image()
+            btn_plot.click(visualize_metric_fn, metric_input, plot_output)
 
-demo.launch()
-
+if __name__ == "__main__":
+    demo.launch()
