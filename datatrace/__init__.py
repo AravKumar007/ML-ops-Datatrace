@@ -22,6 +22,11 @@ from .visualize import visualize_metric, plot_experiments
 # Optional useful utils
 from .utils import ensure_storage, now, save_json, BASE_DIR, META_DB
 
+
+
+from .versioning import add_dataset, list_datasets  # or whatever functions you have there
+from .visualize import visualize_metric, plot_experiments  
+
 # Controls what you get with "from datatrace import *"
 __all__ = [
     'add_dataset',
@@ -38,4 +43,5 @@ __all__ = [
     'now',
     'save_json',
 ]
+
 
