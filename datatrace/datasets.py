@@ -59,12 +59,10 @@ def log_dataset(path: str, rows: int, columns: int):
     return dataset_id
 
 
-# ────────────────────────────────────────────────────────────────
-# NEW: List all versioned datasets
-# ────────────────────────────────────────────────────────────────
 def list_datasets():
     """
-    Returns a list of all versioned datasets from the database.
+    List all versioned datasets from the database.
+    Returns a list of dicts with basic info.
     """
     db_path = ensure_storage()
     conn = sqlite3.connect(db_path)
@@ -77,10 +75,10 @@ def list_datasets():
             ORDER BY timestamp DESC
         """)
         rows = cursor.fetchall()
-        
-        datasets = []
+
+        result = []
         for row in rows:
-            datasets.append({
+            result.append({
                 "id": row[0],
                 "path": row[1],
                 "hash": row[2],
@@ -88,9 +86,9 @@ def list_datasets():
                 "columns": row[4],
                 "timestamp": row[5]
             })
-        return datasets
+        return result
     except Exception as e:
-        print(f"Error listing datasets: {e}")
+        print(f"Error in list_datasets: {e}")
         return []
     finally:
         conn.close()
