@@ -1,26 +1,18 @@
-# app.py - Clean Gradio dashboard for Datatrace
+# app.py - Gradio Dashboard for Datatrace
 import gradio as gr
 import pandas as pd
 import matplotlib.pyplot as plt
 from io import BytesIO
 
-# ==========================================
-# Choose ONE import style below - pick what matches your __init__.py
-# ==========================================
-
-# Style A: Use package-level imports (recommended if __init__.py is correct)
-# from datatrace import add_dataset, list_datasets, log_experiment, get_experiments, track_usage, visualize_metric
-
-# Style B: Direct module imports (safer while debugging, use this for now)
-from datatrace.versioning import add_dataset
-from datatrace.datasets import list_datasets          # change to .versioning if function is there
-from datatrace.experiments import log_experiment, get_experiments
-from datatrace.tracking import track_usage
-from datatrace.visualize import visualize_metric
-
-# ==========================================
-# Functions for Gradio buttons
-# ==========================================
+# Package-level imports (now should work perfectly)
+from datatrace import (
+    add_dataset,
+    list_datasets,
+    log_experiment,
+    get_experiments,
+    track_usage,
+    visualize_metric
+)
 
 def add_dataset_fn(file, metadata: str = ""):
     if file is None:
@@ -28,10 +20,9 @@ def add_dataset_fn(file, metadata: str = ""):
     try:
         meta_dict = {"note": metadata.strip()} if metadata.strip() else {}
         dataset_hash = add_dataset(file.name, metadata=meta_dict)
-        return f"**Success!** Dataset versioned.\nHash: `{dataset_hash}`"
+        return f"**Dataset versioned successfully!**\nHash: `{dataset_hash}`"
     except Exception as e:
-        return f"Error: {str(e)}"
-
+        return f"Error adding dataset: {str(e)}"
 
 def list_datasets_fn():
     try:
@@ -42,7 +33,6 @@ def list_datasets_fn():
     except Exception as e:
         return pd.DataFrame([{"Error": str(e)}])
 
-
 def log_experiment_fn(name: str, dataset_hash: str, params: str, metrics: str):
     if not name or not dataset_hash:
         return "Name and Dataset Hash are required!"
@@ -52,8 +42,7 @@ def log_experiment_fn(name: str, dataset_hash: str, params: str, metrics: str):
         log_experiment(name, dataset_hash, params_dict, metrics_dict)
         return "**Experiment logged successfully!**"
     except Exception as e:
-        return f"Error: {str(e)}"
-
+        return f"Error logging experiment: {str(e)}"
 
 def show_experiments_fn():
     try:
@@ -64,16 +53,14 @@ def show_experiments_fn():
     except Exception as e:
         return pd.DataFrame([{"Error": str(e)}])
 
-
 def track_usage_fn(dataset_hash: str, action: str):
     if not dataset_hash or not action:
-        return "Both hash and action description are required!"
+        return "Hash and action description required!"
     try:
         track_usage(dataset_hash, action)
         return "**Usage tracked successfully!**"
     except Exception as e:
-        return f"Error: {str(e)}"
-
+        return f"Error tracking usage: {str(e)}"
 
 def visualize_metric_fn(metric_name: str):
     try:
@@ -86,53 +73,49 @@ def visualize_metric_fn(metric_name: str):
     except Exception as e:
         return f"Could not generate plot: {str(e)}"
 
-
-# ==========================================
-# Gradio Interface
-# ==========================================
-
-with gr.Blocks(title="Datatrace • MLOps Tracker") as demo:
+# Gradio UI
+with gr.Blocks(title="Datatrace - MLOps Tracker") as demo:
     gr.Markdown("# Datatrace\nLightweight Dataset Versioning & Experiment Tracking")
 
     with gr.Tabs():
         with gr.Tab("Datasets"):
             file_upload = gr.File(label="Upload dataset (CSV, etc.)")
-            metadata_input = gr.Textbox(label="Optional metadata/note")
-            add_button = gr.Button("Version Dataset")
-            add_output = gr.Markdown()
-            add_button.click(add_dataset_fn, [file_upload, metadata_input], add_output)
+            metadata = gr.Textbox(label="Optional note/metadata")
+            add_btn = gr.Button("Version Dataset")
+            add_result = gr.Markdown()
+            add_btn.click(add_dataset_fn, [file_upload, metadata], add_result)
 
             gr.Markdown("---")
-            list_button = gr.Button("List All Datasets")
+            list_btn = gr.Button("Show All Datasets")
             datasets_table = gr.Dataframe()
-            list_button.click(list_datasets_fn, None, datasets_table)
+            list_btn.click(list_datasets_fn, None, datasets_table)
 
         with gr.Tab("Experiments"):
             exp_name = gr.Textbox(label="Experiment Name")
             ds_hash = gr.Textbox(label="Dataset Hash")
-            params_input = gr.Textbox(label="Parameters", placeholder="lr:0.01,epochs:10")
-            metrics_input = gr.Textbox(label="Metrics", placeholder="accuracy:0.95,loss:0.12")
-            log_button = gr.Button("Log Experiment")
-            log_output = gr.Markdown()
-            log_button.click(log_experiment_fn, [exp_name, ds_hash, params_input, metrics_input], log_output)
+            params = gr.Textbox(label="Parameters", placeholder="optimizer:adam,epochs:5")
+            metrics = gr.Textbox(label="Metrics", placeholder="accuracy:0.95")
+            log_btn = gr.Button("Log Experiment")
+            log_result = gr.Markdown()
+            log_btn.click(log_experiment_fn, [exp_name, ds_hash, params, metrics], log_result)
 
             gr.Markdown("---")
-            show_exp_button = gr.Button("Show All Experiments")
-            experiments_table = gr.Dataframe()
-            show_exp_button.click(show_experiments_fn, None, experiments_table)
+            show_exp_btn = gr.Button("Show All Experiments")
+            exp_table = gr.Dataframe()
+            show_exp_btn.click(show_experiments_fn, None, exp_table)
 
         with gr.Tab("Tracking & Visualization"):
             track_hash = gr.Textbox(label="Dataset Hash")
-            action_input = gr.Textbox(label="Action/Usage Description")
-            track_button = gr.Button("Track Usage")
-            track_output = gr.Markdown()
-            track_button.click(track_usage_fn, [track_hash, action_input], track_output)
+            action = gr.Textbox(label="Action Description")
+            track_btn = gr.Button("Track Usage")
+            track_result = gr.Markdown()
+            track_btn.click(track_usage_fn, [track_hash, action], track_result)
 
             gr.Markdown("---")
-            metric_name = gr.Textbox(label="Metric to Visualize", value="accuracy")
-            plot_button = gr.Button("Generate Plot")
-            plot_image = gr.Image()
-            plot_button.click(visualize_metric_fn, metric_name, plot_image)
+            metric = gr.Textbox(label="Metric to plot", value="accuracy")
+            plot_btn = gr.Button("Generate Plot")
+            plot_img = gr.Image()
+            plot_btn.click(visualize_metric_fn, metric, plot_img)
 
 if __name__ == "__main__":
     demo.launch()
