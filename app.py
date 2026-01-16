@@ -1,9 +1,8 @@
-# app.py
-import gradio as gr
-import pandas as pd
-import matplotlib.pyplot as plt
-from io import BytesIO
-
+from datatrace.versioning import add_dataset
+from datatrace.datasets import list_datasets      # ← add this line
+from datatrace.experiments import log_experiment, get_experiments
+from datatrace.tracking import track_usage
+from datatrace.visualize import visualize_metric
 # Clean imports from the package root (after fixing __init__.py)
 # In app.py - replace the old from datatrace.datasets / versioning etc. lines
 
@@ -117,4 +116,5 @@ with gr.Blocks(title="Datatrace - MLOps Tracker") as demo:
 
 if __name__ == "__main__":
     demo.launch()
+
 
