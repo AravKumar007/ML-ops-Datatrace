@@ -4,7 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from io import BytesIO
 
-# Package-level imports (now should work perfectly)
+# Use package-level imports (now safe)
 from datatrace import (
     add_dataset,
     list_datasets,
@@ -22,7 +22,7 @@ def add_dataset_fn(file, metadata: str = ""):
         dataset_hash = add_dataset(file.name, metadata=meta_dict)
         return f"**Dataset versioned successfully!**\nHash: `{dataset_hash}`"
     except Exception as e:
-        return f"Error adding dataset: {str(e)}"
+        return f"Error: {str(e)}"
 
 def list_datasets_fn():
     try:
@@ -42,7 +42,7 @@ def log_experiment_fn(name: str, dataset_hash: str, params: str, metrics: str):
         log_experiment(name, dataset_hash, params_dict, metrics_dict)
         return "**Experiment logged successfully!**"
     except Exception as e:
-        return f"Error logging experiment: {str(e)}"
+        return f"Error: {str(e)}"
 
 def show_experiments_fn():
     try:
@@ -60,7 +60,7 @@ def track_usage_fn(dataset_hash: str, action: str):
         track_usage(dataset_hash, action)
         return "**Usage tracked successfully!**"
     except Exception as e:
-        return f"Error tracking usage: {str(e)}"
+        return f"Error: {str(e)}"
 
 def visualize_metric_fn(metric_name: str):
     try:
@@ -73,8 +73,7 @@ def visualize_metric_fn(metric_name: str):
     except Exception as e:
         return f"Could not generate plot: {str(e)}"
 
-# Gradio UI
-with gr.Blocks(title="Datatrace - MLOps Tracker") as demo:
+with gr.Blocks(title="Datatrace • MLOps Tracker") as demo:
     gr.Markdown("# Datatrace\nLightweight Dataset Versioning & Experiment Tracking")
 
     with gr.Tabs():
