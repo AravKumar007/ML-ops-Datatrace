@@ -1,59 +1,36 @@
-import json
 import sqlite3
-from datetime import datetime
-from datatrace.utils import ensure_storage
-
-def init_experiments_table():
+from datatrace.utils import ensure_storage, now  
+def get_experiments():
+    """
+    Retrieve all logged experiments from the database.
+    Returns a list of dictionaries with experiment details.
+    """
     db_path = ensure_storage()
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS experiments (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT,
-        params TEXT,
-        metrics TEXT,
-        timestamp TEXT
-    )
-    """)  # Removed dataset_version; use junction
+    try:
+        cursor.execute("""
+            SELECT id, name, dataset_hash, params, metrics, timestamp
+            FROM experiments
+            ORDER BY timestamp DESC
+        """)
+        rows = cursor.fetchall()
 
-    conn.commit()
-    conn.close()
-
-def log_experiment(experiment_name: str, dataset_version: str, params: dict, metrics: dict):
-    db_path = ensure_storage()
-    init_experiments_table()
-
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-
-    # Insert experiment
-    cursor.execute("""
-    INSERT INTO experiments (name, params, metrics, timestamp)
-    VALUES (?, ?, ?, ?)
-    """, (
-        experiment_name,
-        json.dumps(params),
-        json.dumps(metrics),
-        datetime.now().isoformat()
-    ))
-    exp_id = cursor.lastrowid
-
-    # Find dataset_id from version (assuming version is short hash)
-    cursor.execute("SELECT id FROM datasets WHERE hash LIKE ?", (dataset_version + '%',))
-    row = cursor.fetchone()
-    if not row:
+        experiments = []
+        for row in rows:
+            experiments.append({
+                "id": row[0],
+                "name": row[1],
+                "dataset_hash": row[2],
+                "params": row[3],
+                "metrics": row[4],
+                "timestamp": row[5]
+            })
+        return experiments
+    except sqlite3.Error as e:
+        print(f"Database error in get_experiments: {e}")
+        return []
+    finally:
         conn.close()
-        raise ValueError("Dataset version not found")
-    dataset_id = row[0]
-
-    # Link in junction
-    cursor.execute("""
-    INSERT OR IGNORE INTO experiment_datasets (experiment_id, dataset_id)
-    VALUES (?, ?)
-    """, (exp_id, dataset_id))
-
-    conn.commit()
-    conn.close()
-    
+        
