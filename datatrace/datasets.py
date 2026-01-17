@@ -59,10 +59,12 @@ def log_dataset(path: str, rows: int, columns: int):
     return dataset_id
 
 
+# ────────────────────────────────────────────────────────────────
+# MISSING FUNCTION - THIS IS WHAT WAS CAUSING THE ERROR
+# ────────────────────────────────────────────────────────────────
 def list_datasets():
     """
     List all versioned datasets from the database.
-    Returns a list of dicts with basic info.
     """
     db_path = ensure_storage()
     conn = sqlite3.connect(db_path)
@@ -88,7 +90,7 @@ def list_datasets():
             })
         return result
     except Exception as e:
-        print(f"Error in list_datasets: {e}")
+        print(f"Database error in list_datasets: {e}")
         return []
     finally:
         conn.close()
