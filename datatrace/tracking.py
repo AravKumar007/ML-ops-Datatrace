@@ -71,4 +71,3 @@ def get_usage_for_dataset(dataset_hash: str):
         return []
     finally:
         conn.close()
-        
