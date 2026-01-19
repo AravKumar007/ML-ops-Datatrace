@@ -1,53 +1,48 @@
-# datatrace/visualize.py
-# Visualization module for metrics and experiments
-# Missing functions 'visualize_metric' and 'plot_experiments' added here
-
 import matplotlib.pyplot as plt
-import pandas as pd
+import json
 import sqlite3
+import pandas as pd
 from datatrace.utils import ensure_storage
 
 
-def visualize_metric(metric_name: str):
+def visualize_metric(metric_name: str = "accuracy"):
     """
-    Generate a simple line plot for a given metric across experiments.
-    Returns a matplotlib Figure object.
+    Create a line plot of a metric across all experiments.
+    Returns a matplotlib Figure object (for Gradio or saving).
     """
     db_path = ensure_storage()
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
     try:
-        cursor.execute("""
-            SELECT name, metrics
-            FROM experiments
-            ORDER BY timestamp
-        """)
+        cursor.execute("SELECT name, metrics FROM experiments ORDER BY timestamp")
         rows = cursor.fetchall()
 
         if not rows:
-            raise ValueError(f"No experiments found for metric '{metric_name}'")
+            fig, ax = plt.subplots()
+            ax.text(0.5, 0.5, "No experiments logged yet", ha='center', va='center')
+            return fig
 
-        x_labels = []
-        y_values = []
-
+        x = []
+        y = []
         for row in rows:
-            exp_name = row[0]
-            metrics_json = row[1]
-            metrics = pd.read_json(metrics_json) if metrics_json else {}
+            name = row[0]
+            metrics = json.loads(row[1]) if row[1] else {}
             if metric_name in metrics:
-                x_labels.append(exp_name)
-                y_values.append(metrics[metric_name])
+                x.append(name)
+                y.append(metrics[metric_name])
 
-        if not y_values:
-            raise ValueError(f"Metric '{metric_name}' not found in any experiment")
+        if not y:
+            fig, ax = plt.subplots()
+            ax.text(0.5, 0.5, f"No data for metric '{metric_name}'", ha='center', va='center')
+            return fig
 
         fig, ax = plt.subplots(figsize=(10, 6))
-        ax.plot(x_labels, y_values, marker='o', linestyle='-', color='b')
-        ax.set_xlabel('Experiment')
+        ax.plot(x, y, marker='o', linestyle='-', color='teal')
+        ax.set_xlabel('Experiment Name')
         ax.set_ylabel(metric_name.capitalize())
-        ax.set_title(f'{metric_name.capitalize()} Across Experiments')
-        ax.grid(True)
+        ax.set_title(f'{metric_name.capitalize()} Over Experiments')
+        ax.grid(True, linestyle='--', alpha=0.7)
         plt.xticks(rotation=45, ha='right')
         plt.tight_layout()
 
@@ -55,9 +50,8 @@ def visualize_metric(metric_name: str):
 
     except Exception as e:
         print(f"Visualization error: {e}")
-        # Return a dummy empty figure on error
         fig, ax = plt.subplots()
-        ax.text(0.5, 0.5, f"Error: {e}", ha='center', va='center')
+        ax.text(0.5, 0.5, f"Error: {str(e)}", ha='center', va='center')
         return fig
     finally:
         conn.close()
@@ -65,12 +59,12 @@ def visualize_metric(metric_name: str):
 
 def plot_experiments():
     """
-    Generate an overview plot of all experiments (e.g., number of experiments over time).
+    Plot number of experiments over time (bar chart).
     Returns a matplotlib Figure.
     """
     db_path = ensure_storage()
     conn = sqlite3.connect(db_path)
-    df = pd.read_sql_query("SELECT timestamp FROM experiments ORDER BY timestamp", conn)
+    df = pd.read_sql_query("SELECT timestamp FROM experiments", conn)
     conn.close()
 
     if df.empty:
@@ -83,11 +77,12 @@ def plot_experiments():
     counts = df['date'].value_counts().sort_index()
 
     fig, ax = plt.subplots(figsize=(10, 6))
-    ax.bar(counts.index, counts.values, color='skyblue')
+    ax.bar(counts.index, counts.values, color='coral')
     ax.set_xlabel('Date')
     ax.set_ylabel('Number of Experiments')
-    ax.set_title('Experiments Over Time')
+    ax.set_title('Experiments Created Over Time')
     plt.xticks(rotation=45, ha='right')
     plt.tight_layout()
 
     return fig
+
