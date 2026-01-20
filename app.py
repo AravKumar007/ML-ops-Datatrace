@@ -116,5 +116,6 @@ with gr.Blocks(title="Datatrace • MLOps Tracker") as demo:
             plot_img = gr.Image()
             plot_btn.click(visualize_metric_fn, metric, plot_img)
 if __name__ == "__main__":
-    demo.launch(share=True)
+    demo.launch(share=True, server_name="0.0.0.0")
     
+
