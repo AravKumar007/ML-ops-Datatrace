@@ -1,4 +1,3 @@
-# app.py - Gradio Dashboard for Datatrace
 import gradio as gr
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -117,10 +116,10 @@ with gr.Blocks(title="Datatrace • MLOps Tracker") as demo:
             plot_btn.click(visualize_metric_fn, metric, plot_img)
 if __name__ == "__main__":
     demo.launch(
-        share=False,               
-        server_name="127.0.0.1",   
-        server_port=7860,     
-        inbrowser=True,
-        debug=True                
+        share=False,                    
+        server_name="127.0.0.1",        
+        server_port=7860,               
+        debug=True,                     
+        inbrowser=True                  
     )
-
+    
