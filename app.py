@@ -2,8 +2,6 @@ import gradio as gr
 import pandas as pd
 import matplotlib.pyplot as plt
 from io import BytesIO
-
-
 from datatrace import (
     add_dataset,
     list_datasets,
@@ -114,9 +112,10 @@ with gr.Blocks(title="Datatrace • MLOps Tracker") as demo:
             plot_btn = gr.Button("Generate Plot")
             plot_img = gr.Image()
             plot_btn.click(visualize_metric_fn, metric, plot_img)
+
 if __name__ == "__main__":
     demo.launch(
-        share=False,                    
+        share=False,                  
         server_name="127.0.0.1",        
         server_port=7860,               
         debug=True,                     
